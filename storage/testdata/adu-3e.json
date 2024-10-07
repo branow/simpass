@@ -1,0 +1,10 @@
+{
+  "password-hash": "some-password-hash",
+  "crypt-key": "some-crypt-key",
+  "data-units": {
+    "unit": "unit_value",
+    "unit1": "unit1_value",
+    "unit2": "unit2_value",
+    "unit3": "unit3_value"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "password-hash": "some-password-hash",
+  "crypt-key": "some-crypt-key",
+  "data-units": null
+}
