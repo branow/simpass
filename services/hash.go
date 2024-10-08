@@ -15,13 +15,21 @@ type Hasher interface {
 	// Hash hashes the given password
 	Hash(password []byte) ([]byte, error)
 
-	// CompareHex compares the given password with the hash in hex format
-	// and if they match, returns nil otherwise an error is returned.
+	// CompareHex compares the given password with the hash in hex format.
+	// If there is a mismatch, it returns [PasswordHashMismatch] error,
+	// otherwise nil
 	CompareHex(password, hash string) error
 
-	// CompareHex compares the given password with the hash
-	// and if they match, returns nil otherwise an error is returned.
+	// CompareHex compares the given password with the hash.
+	// If there is a mismatch, it returns [PasswordHashMismatch] error,
+	// otherwise nil
 	Compare(password, hash []byte) error
+}
+
+type PasswordHashMismatch struct{}
+
+func (e PasswordHashMismatch) Error() string {
+	return "the password does not match the hash"
 }
 
 // BCryptHasher is a struct that implements Hasher interface using bcrypt with
@@ -58,5 +66,11 @@ func (bch BCryptHasher) CompareHex(password, hash string) error {
 // Compare compares the given password with the hash. See
 // [golang.org/x/crypto/bcrypt.CompareHashAndPassword].
 func (bch BCryptHasher) Compare(password, hash []byte) error {
-	return bcrypt.CompareHashAndPassword(hash, password)
+	err := bcrypt.CompareHashAndPassword(hash, password)
+	if err != nil {
+		if err.Error() == bcrypt.ErrMismatchedHashAndPassword.Error() {
+			return PasswordHashMismatch{}
+		}
+	}
+	return err
 }

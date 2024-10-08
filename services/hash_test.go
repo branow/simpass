@@ -10,7 +10,6 @@ import (
 	"github.com/branow/tabtest/tab"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var hasher Hasher = BCryptHasher{}
@@ -55,7 +54,7 @@ func TestBCryptHasher_CompareHex(t *testing.T) {
 		{
 			"@not match", "12345678",
 			"243261243132247731786b735176536457726d5a6453793750696a6b65734964566f6d76363531624a70445949665762574a4d4250362e3475684644",
-			bcrypt.ErrMismatchedHashAndPassword,
+			PasswordHashMismatch{},
 		},
 		{
 			"@not match", "12345678",
