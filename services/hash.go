@@ -26,9 +26,9 @@ type Hasher interface {
 	Compare(password, hash []byte) error
 }
 
-type PasswordHashMismatch struct{}
+type PasswordHashMismatchErr struct{}
 
-func (e PasswordHashMismatch) Error() string {
+func (e PasswordHashMismatchErr) Error() string {
 	return "the password does not match the hash"
 }
 
@@ -69,7 +69,7 @@ func (bch BCryptHasher) Compare(password, hash []byte) error {
 	err := bcrypt.CompareHashAndPassword(hash, password)
 	if err != nil {
 		if err.Error() == bcrypt.ErrMismatchedHashAndPassword.Error() {
-			return PasswordHashMismatch{}
+			return PasswordHashMismatchErr{}
 		}
 	}
 	return err

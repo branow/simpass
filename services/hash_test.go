@@ -54,7 +54,7 @@ func TestBCryptHasher_CompareHex(t *testing.T) {
 		{
 			"@not match", "12345678",
 			"243261243132247731786b735176536457726d5a6453793750696a6b65734964566f6d76363531624a70445949665762574a4d4250362e3475684644",
-			PasswordHashMismatch{},
+			PasswordHashMismatchErr{},
 		},
 		{
 			"@not match", "12345678",
