@@ -1,7 +1,6 @@
 package storage_test
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -18,13 +17,13 @@ var storage = NewJsonStorage()
 func TestJsonStorage_CreateStorageFile(t *testing.T) {
 	data := []tab.Args{
 		{
-			"@file exists error",
+			"@file already exists error",
 			createFile(t, "./testdata/csf_1.json"),
 			"", "", "",
-			models.FileAlreadyExistsErr{Path: "./testdata/csf_1.json"},
+			models.ErrFileAlreadyExists,
 		},
 		{
-			"@creation",
+			"@successful creation",
 			"./testdata/csf_2.json",
 			"some-password-hash",
 			"some-crypt-key",
@@ -41,7 +40,7 @@ func TestJsonStorage_CreateStorageFile(t *testing.T) {
 		})
 
 		aErr := storage.CreateStorageFile(path, passHash, cryptKey)
-		assertEqualError(t, eErr, aErr)
+		assert.ErrorIs(t, aErr, eErr)
 
 		if aErr == nil && eErr == nil {
 			assertEqualJsonFile(t, ePath, path)
@@ -56,10 +55,10 @@ func TestJsonStorage_GetPasswordHash(t *testing.T) {
 			"@file does not exist",
 			"./testdata/not_exist",
 			"",
-			models.FileDoesNotExistErr{Path: "./testdata/not_exist"},
+			models.ErrFileDoesNotExist,
 		},
 		{
-			"@read",
+			"@successful read",
 			"./testdata/data.json",
 			"some-password-hash",
 			nil,
@@ -67,7 +66,7 @@ func TestJsonStorage_GetPasswordHash(t *testing.T) {
 	}
 	test := func(t *testing.T, path, exp string, eErr error) {
 		act, aErr := storage.GetPasswordHash(path)
-		assertEqualError(t, eErr, aErr)
+		assert.ErrorIs(t, aErr, eErr)
 		assert.Equal(t, exp, act)
 	}
 	tab.RunWithArgs(t, data, test)
@@ -79,10 +78,10 @@ func TestJsonStorage_GetCryptKey(t *testing.T) {
 			"@file does not exist",
 			"./testdata/not_exist",
 			"",
-			models.FileDoesNotExistErr{Path: "./testdata/not_exist"},
+			models.ErrFileDoesNotExist,
 		},
 		{
-			"@read",
+			"@successful read",
 			"./testdata/data.json",
 			"some-crypt-key",
 			nil,
@@ -90,7 +89,7 @@ func TestJsonStorage_GetCryptKey(t *testing.T) {
 	}
 	test := func(t *testing.T, path, exp string, eErr error) {
 		act, aErr := storage.GetCryptKey(path)
-		assertEqualError(t, eErr, aErr)
+		assert.ErrorIs(t, aErr, eErr)
 		assert.Equal(t, exp, act)
 	}
 	tab.RunWithArgs(t, data, test)
@@ -102,10 +101,16 @@ func TestJsonStorage_GetDataUnits(t *testing.T) {
 			"@file does not exist",
 			"./testdata/not_exist",
 			nil,
-			models.FileDoesNotExistErr{Path: "./testdata/not_exist"},
+			models.ErrFileDoesNotExist,
 		},
 		{
-			"@get units",
+			"@no data untis err",
+			"./testdata/empty.json",
+			nil,
+			models.ErrNoDataUnits,
+		},
+		{
+			"@successful get",
 			"./testdata/data.json",
 			map[string]string{
 				"unit1": "unit1_value",
@@ -117,7 +122,7 @@ func TestJsonStorage_GetDataUnits(t *testing.T) {
 	}
 	test := func(t *testing.T, path string, exp map[string]string, eErr error) {
 		act, aErr := storage.GetDataUnits(path)
-		assertEqualError(t, eErr, aErr)
+		assert.ErrorIs(t, aErr, eErr)
 		assert.Equal(t, exp, act)
 	}
 	tab.RunWithArgs(t, data, test)
@@ -126,27 +131,27 @@ func TestJsonStorage_GetDataUnits(t *testing.T) {
 func TestJsonStorage_GetDataUnit(t *testing.T) {
 	data := []tab.Args{
 		{
-			"@file does not exist",
+			"@file does not exist error",
 			"./testdata/not_exist",
 			"", "",
-			models.FileDoesNotExistErr{Path: "./testdata/not_exist"},
+			models.ErrFileDoesNotExist,
 		},
 		{
-			"@not exists in empty",
+			"@no data units error",
 			"./testdata/empty.json",
 			"unit",
 			"",
-			models.DataUnitDoesNotExistErr{Path: "./testdata/empty.json", Name: "unit"},
+			models.ErrNoDataUnits,
 		},
 		{
-			"@not exist",
+			"@data unit not found error",
 			"./testdata/data.json",
 			"unit",
 			"",
-			models.DataUnitDoesNotExistErr{Path: "./testdata/data.json", Name: "unit"},
+			models.ErrDataUnitNotFound,
 		},
 		{
-			"@get unit1",
+			"@successful get",
 			"./testdata/data.json",
 			"unit1",
 			"unit1_value",
@@ -155,7 +160,7 @@ func TestJsonStorage_GetDataUnit(t *testing.T) {
 	}
 	test := func(t *testing.T, path, name, exp string, eErr error) {
 		act, aErr := storage.GetDataUnit(path, name)
-		assertEqualError(t, eErr, aErr)
+		assert.ErrorIs(t, aErr, eErr)
 		assert.Equal(t, exp, act)
 	}
 	tab.RunWithArgs(t, data, test)
@@ -169,7 +174,7 @@ func TestJsonStorage_AddDataUnit(t *testing.T) {
 			"unit1",
 			"unit1_value",
 			"",
-			models.DataUnitAlreadyExistErr{Path: "./testdata/adu-1a.json", Name: "unit1"},
+			models.ErrDataUnitIsAlreadyPresent,
 		},
 		{
 			"@add unit to empty",
@@ -196,7 +201,7 @@ func TestJsonStorage_AddDataUnit(t *testing.T) {
 			os.Remove(path)
 		})
 		aErr := storage.AddDataUnit(path, name, value)
-		assertEqualError(t, eErr, aErr)
+		assert.ErrorIs(t, aErr, eErr)
 
 		if aErr == nil && eErr == nil {
 			assertEqualJsonFile(t, ePath, path)
@@ -213,7 +218,7 @@ func TestJsonStorage_UpdateDataUnit(t *testing.T) {
 			"unit",
 			"unit1_value",
 			"",
-			models.DataUnitDoesNotExistErr{Path: "./testdata/udu-1a.json", Name: "unit"},
+			models.ErrDataUnitNotFound,
 		},
 		{
 			"@update unit",
@@ -232,7 +237,7 @@ func TestJsonStorage_UpdateDataUnit(t *testing.T) {
 			os.Remove(path)
 		})
 		aErr := storage.UpdateDataUnit(path, name, value)
-		assertEqualError(t, eErr, aErr)
+		assert.ErrorIs(t, aErr, eErr)
 
 		if aErr == nil && eErr == nil {
 			assertEqualJsonFile(t, ePath, path)
@@ -244,17 +249,14 @@ func TestJsonStorage_UpdateDataUnit(t *testing.T) {
 func TestJsonStorage_DeleteDataUnits(t *testing.T) {
 	data := []tab.Args{
 		{
-			"@units does not exist",
+			"@units not found errors",
 			"./testdata/data.json",
 			[]string{"unit1", "unit4", "unit5"},
 			"./testdata/ddu-1e.json",
-			errors.Join(
-				models.DataUnitDoesNotExistErr{Path: "./testdata/ddu-1a.json", Name: "unit4"},
-				models.DataUnitDoesNotExistErr{Path: "./testdata/ddu-1a.json", Name: "unit5"},
-			),
+			[]error{models.ErrDataUnitNotFound, models.ErrDataUnitNotFound},
 		},
 		{
-			"@update unit",
+			"@completely successful delete",
 			"./testdata/data.json",
 			[]string{"unit2"},
 			"./testdata/ddu-2e.json",
@@ -262,7 +264,7 @@ func TestJsonStorage_DeleteDataUnits(t *testing.T) {
 		},
 	}
 	i := 0
-	test := func(t *testing.T, path string, names []string, ePath string, eErr error) {
+	test := func(t *testing.T, path string, names []string, ePath string, eErrs []error) {
 		i++
 		path = copy(t, path, fmt.Sprintf("./testdata/ddu-%da.json", i))
 		t.Cleanup(func() {
@@ -270,7 +272,7 @@ func TestJsonStorage_DeleteDataUnits(t *testing.T) {
 		})
 
 		aErr := storage.DeleteDataUnits(path, names...)
-		assertEqualError(t, eErr, aErr)
+		assertErrorsIs(t, eErrs, aErr)
 		assertEqualJsonFile(t, ePath, path)
 	}
 	tab.RunWithArgs(t, data, test)
@@ -306,13 +308,25 @@ func readFile(t *testing.T, path string) string {
 	return string(data)
 }
 
-func assertEqualError(t *testing.T, eErr, aErr error) {
+func assertEqualError(t *testing.T, aErr, eErr error) {
 	if eErr == nil {
 		assert.NoError(t, aErr)
 		return
 	}
 	assert.Error(t, aErr)
 	assert.EqualError(t, aErr, eErr.Error())
+}
+
+func assertErrorsIs(t *testing.T, eErrs []error, aErr error) {
+	if eErrs == nil {
+		assert.NoError(t, aErr)
+		return
+	}
+	aErrs := aErr.(interface{ Unwrap() []error }).Unwrap()
+	assert.Equalf(t, len(eErrs), len(aErrs), "expected: %v, actual: %v", eErrs, aErrs)
+	for _, eErr := range eErrs {
+		assert.ErrorIs(t, aErr, eErr)
+	}
 }
 
 func assertEqualJsonFile(t *testing.T, ePath, aPath string) {
