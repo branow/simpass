@@ -5,8 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"os"
+)
 
-	"github.com/branow/simpass/models"
+var (
+	ErrFileAlreadyExists        = errors.New("file already exists")
+	ErrFileDoesNotExist         = errors.New("file does not exist")
+	ErrNoDataUnits              = errors.New("no data units in the file")
+	ErrDataUnitNotFound         = errors.New("data unit not found in the file")
+	ErrDataUnitIsAlreadyPresent = errors.New("data unit with the name is already present in the file")
+	ErrEmptyDataUnitName        = errors.New("data unit name is empty")
 )
 
 func NewJsonStorage() *JsonStorage {
@@ -17,7 +24,7 @@ type JsonStorage struct{}
 
 func (s JsonStorage) CreateStorageFile(path, passwordHash, cryptKey string) (err error) {
 	if isExist(path) {
-		return wrapFileErr(path, models.ErrFileAlreadyExists)
+		return wrapFileErr(path, ErrFileAlreadyExists)
 	}
 	file, err := os.Create(path)
 	if err != nil {
@@ -53,11 +60,11 @@ func (s JsonStorage) GetDataUnit(path, name string) (string, error) {
 		return "", err
 	}
 	if len(units) == 0 {
-		return "", wrapFileErr(path, models.ErrNoDataUnits)
+		return "", wrapFileErr(path, ErrNoDataUnits)
 	}
 	unit, ok := units[name]
 	if !ok {
-		return "", wrapDataUnitErr(path, name, models.ErrDataUnitNotFound)
+		return "", wrapDataUnitErr(path, name, ErrDataUnitNotFound)
 	}
 	return unit, nil
 }
@@ -68,18 +75,21 @@ func (s JsonStorage) GetDataUnits(path string) (map[string]string, error) {
 		return nil, err
 	}
 	if data.DataUnits == nil {
-		return nil, wrapFileErr(path, models.ErrNoDataUnits)
+		return nil, wrapFileErr(path, ErrNoDataUnits)
 	}
 	return data.DataUnits, nil
 }
 
 func (s JsonStorage) AddDataUnit(path, name, value string) error {
+	if name == "" {
+		return wrapDataUnitErr(path, name, ErrEmptyDataUnitName)
+	}
 	return s.update(path, func(data *jsonStruct) error {
 		if data.DataUnits == nil {
 			data.DataUnits = map[string]string{}
 		}
 		if _, ok := data.DataUnits[name]; ok {
-			return wrapDataUnitErr(path, name, models.ErrDataUnitIsAlreadyPresent)
+			return wrapDataUnitErr(path, name, ErrDataUnitIsAlreadyPresent)
 		}
 		data.DataUnits[name] = value
 		return nil
@@ -89,10 +99,10 @@ func (s JsonStorage) AddDataUnit(path, name, value string) error {
 func (s JsonStorage) UpdateDataUnit(path, name, value string) error {
 	return s.update(path, func(data *jsonStruct) error {
 		if data.DataUnits == nil || len(data.DataUnits) == 0 {
-			return wrapFileErr(path, models.ErrNoDataUnits)
+			return wrapFileErr(path, ErrNoDataUnits)
 		}
 		if _, ok := data.DataUnits[name]; !ok {
-			return wrapDataUnitErr(path, name, models.ErrDataUnitNotFound)
+			return wrapDataUnitErr(path, name, ErrDataUnitNotFound)
 		}
 		data.DataUnits[name] = value
 		return nil
@@ -112,10 +122,10 @@ func (s JsonStorage) DeleteDataUnits(path string, names ...string) error {
 func (s JsonStorage) DeleteDataUnit(path, name string) error {
 	return s.update(path, func(data *jsonStruct) error {
 		if data.DataUnits == nil || len(data.DataUnits) == 0 {
-			return wrapFileErr(path, models.ErrNoDataUnits)
+			return wrapFileErr(path, ErrNoDataUnits)
 		}
 		if _, ok := data.DataUnits[name]; !ok {
-			return wrapDataUnitErr(path, name, models.ErrDataUnitNotFound)
+			return wrapDataUnitErr(path, name, ErrDataUnitNotFound)
 		}
 		delete(data.DataUnits, name)
 		return nil
@@ -137,7 +147,7 @@ func (s JsonStorage) update(path string, upd updateFileData) error {
 
 func (s JsonStorage) read(path string) (*jsonStruct, error) {
 	if !isExist(path) {
-		return nil, wrapFileErr(path, models.ErrFileDoesNotExist)
+		return nil, wrapFileErr(path, ErrFileDoesNotExist)
 	}
 	file, err := os.Open(path)
 	if err != nil {
@@ -151,7 +161,7 @@ func (s JsonStorage) read(path string) (*jsonStruct, error) {
 
 func (s JsonStorage) write(path string, data *jsonStruct) error {
 	if !isExist(path) {
-		return wrapFileErr(path, models.ErrFileDoesNotExist)
+		return wrapFileErr(path, ErrFileDoesNotExist)
 	}
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0666)
 	if err != nil {

@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/branow/simpass/models"
 	. "github.com/branow/simpass/storage"
 	"github.com/branow/tabtest/tab"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +19,7 @@ func TestJsonStorage_CreateStorageFile(t *testing.T) {
 			"@file already exists error",
 			createFile(t, "./testdata/csf_1.json"),
 			"", "", "",
-			models.ErrFileAlreadyExists,
+			ErrFileAlreadyExists,
 		},
 		{
 			"@successful creation",
@@ -55,7 +54,7 @@ func TestJsonStorage_GetPasswordHash(t *testing.T) {
 			"@file does not exist",
 			"./testdata/not_exist",
 			"",
-			models.ErrFileDoesNotExist,
+			ErrFileDoesNotExist,
 		},
 		{
 			"@successful read",
@@ -78,7 +77,7 @@ func TestJsonStorage_GetCryptKey(t *testing.T) {
 			"@file does not exist",
 			"./testdata/not_exist",
 			"",
-			models.ErrFileDoesNotExist,
+			ErrFileDoesNotExist,
 		},
 		{
 			"@successful read",
@@ -101,13 +100,13 @@ func TestJsonStorage_GetDataUnits(t *testing.T) {
 			"@file does not exist",
 			"./testdata/not_exist",
 			nil,
-			models.ErrFileDoesNotExist,
+			ErrFileDoesNotExist,
 		},
 		{
 			"@no data untis err",
 			"./testdata/empty.json",
 			nil,
-			models.ErrNoDataUnits,
+			ErrNoDataUnits,
 		},
 		{
 			"@successful get",
@@ -134,21 +133,21 @@ func TestJsonStorage_GetDataUnit(t *testing.T) {
 			"@file does not exist error",
 			"./testdata/not_exist",
 			"", "",
-			models.ErrFileDoesNotExist,
+			ErrFileDoesNotExist,
 		},
 		{
 			"@no data units error",
 			"./testdata/empty.json",
 			"unit",
 			"",
-			models.ErrNoDataUnits,
+			ErrNoDataUnits,
 		},
 		{
 			"@data unit not found error",
 			"./testdata/data.json",
 			"unit",
 			"",
-			models.ErrDataUnitNotFound,
+			ErrDataUnitNotFound,
 		},
 		{
 			"@successful get",
@@ -174,7 +173,7 @@ func TestJsonStorage_AddDataUnit(t *testing.T) {
 			"unit1",
 			"unit1_value",
 			"",
-			models.ErrDataUnitIsAlreadyPresent,
+			ErrDataUnitIsAlreadyPresent,
 		},
 		{
 			"@add unit to empty",
@@ -218,7 +217,7 @@ func TestJsonStorage_UpdateDataUnit(t *testing.T) {
 			"unit",
 			"unit1_value",
 			"",
-			models.ErrDataUnitNotFound,
+			ErrDataUnitNotFound,
 		},
 		{
 			"@update unit",
@@ -253,7 +252,7 @@ func TestJsonStorage_DeleteDataUnits(t *testing.T) {
 			"./testdata/data.json",
 			[]string{"unit1", "unit4", "unit5"},
 			"./testdata/ddu-1e.json",
-			[]error{models.ErrDataUnitNotFound, models.ErrDataUnitNotFound},
+			[]error{ErrDataUnitNotFound, ErrDataUnitNotFound},
 		},
 		{
 			"@completely successful delete",
